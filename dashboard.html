@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Notes Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e1e2e;
+            color: #fff;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 {
+            color: #ffffff;
+            border-bottom: 2px solid #89b4fa;
+            padding-bottom: 10px;
+        }
+        .live-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #a6e3a1;
+            border-radius: 50%;
+            margin-left: 10px;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+        .note {
+            background: #696969;
+            padding: 15px 20px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border-left: 4px solid #89b4fa;
+            transition: all 0.3s;
+        }
+        .note:hover {
+            background: #45475a;
+            transform: scale(1.01);
+        }
+        .note.pinned {
+            border-left-color: #f9e2af;
+        }
+        .note-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        .note-content {
+            color: #a6adc8;
+            margin: 5px 0;
+        }
+        .note-meta-container {
+            width: fit-content;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1vw;
+        }
+        .note-meta {
+            color: #b5bbdf;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        .badge {
+            background: #45475a;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-right: 5px;
+        }
+        .badge.pinned-badge {
+            background: #f9e2af;
+            color: #1e1e2e;
+        }
+        .count {
+            color: #a6e3a1;
+            font-size: 14px;
+        }
+        #timestamp {
+            color: #b0b6d6;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+        .error {
+            color: #f38ba8;
+            padding: 20px;
+            background: #313244;
+            border-radius: 8px;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .status-item {
+            background: #313244;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .status-item.online {
+            color: #a6e3a1;
+        }
+        .status-item.offline {
+            color: #f38ba8;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>
+        📝 Live Notes Dashboard
+        <span class="live-dot"></span>
+    </h1>
+
+    <div class="status-bar">
+        <span class="count" id="count">Loading...</span>
+        <span class="status-item" id="status">Connecting...</span>
+    </div>
+
+    <div id="notes-container">
+        <p style="color: #6c7086;">Fetching notes...</p>
+    </div>
+    <div id="timestamp">Waiting for updates...</div>
+
+    <script>
+    // Use your backend port (5500)
+    const API_URL = 'http://localhost:5500/api/notes/live';  // ← Use 5500, not 5000
+
+    async function fetchNotes() {
+        try {
+            const response = await fetch(API_URL);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const notes = await response.json();
+            
+            const container = document.getElementById('notes-container');
+            const countEl = document.getElementById('count');
+            const statusEl = document.getElementById('status');
+            
+            statusEl.textContent = '🟢 Online';
+            statusEl.className = 'status-item online';
+            
+            if (notes.length === 0) {
+                container.innerHTML = '<p style="color: #6c7086;">No notes yet. Insert one in psql!</p>';
+                countEl.textContent = '📊 0 notes';
+                return;
+            }
+            
+            countEl.textContent = `📊 ${notes.length} notes`;
+            
+            container.innerHTML = notes.map(note => `
+                <div class="note ${note.is_pinned ? 'pinned' : ''}">
+                    <div class="note-title">
+                        ${note.is_pinned ? '📌 ' : ''}
+                        ${note.title || 'Untitled'}
+                        ${note.is_pinned ? '<span class="badge pinned-badge">Pinned</span>' : ''}
+                        <span class="badge">${note.category || 'General'}</span>
+                    </div>
+                    <div class="note-content">${note.content || ''}</div>
+                    <div class="note-meta-container">
+                        <div class="note-meta">📅 ${note.created_at ? new Date(note.created_at).toLocaleDateString() : ''}</div>
+                        <div class="note-meta">🕐 ${note.created_at ? new Date(note.created_at).toLocaleTimeString() : ''}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('timestamp').textContent = '🔄 Last updated: ' + new Date().toLocaleTimeString();
+            
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('notes-container').innerHTML = `
+                <div class="error">
+                    ❌ Cannot connect to backend server.<br>
+                    Make sure your Node.js server is running: <code>npm start</code> or <code>node server.js</code>
+                    <br><br>
+                    <small>Error: ${error.message}</small>
+                </div>
+            `;
+            document.getElementById('count').textContent = '📊 Offline';
+            document.getElementById('status').textContent = '🔴 Offline';
+            document.getElementById('status').className = 'status-item offline';
+        }
+    }
+
+    // Fetch immediately
+    fetchNotes();
+
+    // Auto-refresh every 5 seconds
+    setInterval(fetchNotes, 5000);
+</script>
+
+</body>
+</html>
