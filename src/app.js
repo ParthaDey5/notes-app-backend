@@ -12,12 +12,24 @@ const app = express();
 // ============================================
 // DATABASE CONNECTION
 // ============================================
+// const pool = new Pool({
+//     user: process.env.DB_USER || 'postgres',
+//     host: process.env.DB_HOST || 'localhost',
+//     database: process.env.DB_NAME || 'your_database',
+//     password: process.env.DB_PASSWORD || 'your_password',
+//     port: process.env.DB_PORT || 5432,
+// });
+
+
+
+// DATABASE CONNECTION
+// ============================================
+
 const pool = new Pool({
-    user: process.env.DB_USER || 'postgres',
-    host: process.env.DB_HOST || 'localhost',
-    database: process.env.DB_NAME || 'your_database',
-    password: process.env.DB_PASSWORD || 'your_password',
-    port: process.env.DB_PORT || 5432,
+    connectionString: "postgresql://neondb_owner:npg_qPV4hJNFbp8n@ep-super-violet-athnw7zx-pooler.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require",
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
 // Middleware
