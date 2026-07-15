@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');  // ← ADD THIS
@@ -23,6 +24,11 @@ const pool = new Pool({
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../dashboard.html'));
+});
 
 // ============================================
 // ✅ PUBLIC ROUTE - Live dashboard (NO AUTH)
