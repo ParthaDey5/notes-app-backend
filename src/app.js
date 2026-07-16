@@ -49,7 +49,7 @@ app.get('/', (req, res) => {
 app.get('/api/notes/live', async (req, res) => {
     try {
         const result = await pool.query(
-            "SELECT id, title, content, category, is_pinned, created_at FROM notes ORDER BY created_at ASC LIMIT 20"
+            "SELECT id, title, content, category, is_pinned, created_at FROM notes ORDER BY created_at DESC LIMIT 20"
         );
         res.json(result.rows);
     } catch (err) {
